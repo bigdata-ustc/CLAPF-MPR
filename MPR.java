@@ -28,8 +28,8 @@ public class MPR {
 
 
     // Input data files
-    public static String fnTrainData = "data/ML100K-TXT-FORMAT/ML100K-copy1-train";
-    public static String fnTestData = "data/ML100K-TXT-FORMAT/ML100K-copy1-test";
+    public static String fnTrainData = "";
+    public static String fnTestData = "";
     // number of users
     public static int n = 943;
     // number of items
