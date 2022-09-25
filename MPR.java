@@ -1,10 +1,12 @@
+package baseline;
+
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.util.*;
 import java.util.Map.Entry;
 
-// 
+
 
 public class MPR {
 
@@ -28,42 +30,32 @@ public class MPR {
     // Input data files
     public static String fnTrainData = "data/ML100K-TXT-FORMAT/ML100K-copy1-train";
     public static String fnTestData = "data/ML100K-TXT-FORMAT/ML100K-copy1-test";
-    public static String relevantData = "data/ML100K-TXT-FORMAT/ML100K-copy1-relevant";
     // number of users
     public static int n = 943;
     // number of items
     public static int m = 1682;
     
 
-
-
     // Evaluation criteria
     // length of recommended list
     public static int topK = 10;
-    // MRR、MAP、ARP、AUC
+    // 
     public static boolean flagMRR = true;
     public static boolean flagMAP = true;
     public static boolean flagAUC = true;
 
 
-
-    // Input data to hash map 
-    // training data
+    // Training data
     public static HashMap<Integer, HashSet<Integer>> TrainData = new HashMap<Integer, HashSet<Integer>>();
     public static HashMap<Integer, HashSet<Integer>> TrainDataItem2User = new HashMap<Integer, HashSet<Integer>>();
     // Test data
     public static HashMap<Integer, HashSet<Integer>> TestData = new HashMap<Integer, HashSet<Integer>>();
-    // $I^e$
-    public static ArrayList<Integer> relevant = new ArrayList<Integer>();
-    ;
-    // whole item set
+    // Whole item set
     public static HashSet<Integer> ItemSetWhole = new HashSet<Integer>();
 
 
-
-    // Some statistics, start from index "1", used to calculate the performance on different user groups
+    // Some statistics, start from index "1"
     public static int[] itemRatingNumTrain; 
-
 
 
     // Model parameters to learn, start from index "1"
@@ -75,10 +67,8 @@ public class MPR {
     public static float[] biasV;
 
 
-
-
     public static void main(String[] args) throws Exception {
-        
+
         // Read the configurations
         for (int k=0; k < args.length; k++) {
             if (args[k].equals("-d")) d = Integer.parseInt(args[++k]);
@@ -91,7 +81,6 @@ public class MPR {
 
             else if (args[k].equals("-fnTrainData")) fnTrainData = args[++k];
             else if (args[k].equals("-fnTestData")) fnTestData = args[++k];
-            else if (args[k].equals("-relevantData")) relevantData = args[++k];
             else if (args[k].equals("-n")) n = Integer.parseInt(args[++k]);
             else if (args[k].equals("-m")) m = Integer.parseInt(args[++k]);
 
@@ -115,7 +104,6 @@ public class MPR {
 
         System.out.println("fnTrainData: " + fnTrainData);
         System.out.println("fnTestData: " + fnTestData);
-        System.out.println("fnTestData: " + relevantData);
         System.out.println("n: " + Integer.toString(n));
         System.out.println("m: " + Integer.toString(m));
 
@@ -128,7 +116,8 @@ public class MPR {
         // some statistics, strat from index "1";
         itemRatingNumTrain = new int[m+1];
 
-        // model parameters to learn, start from index "1"
+
+        // Model parameters
         U = new float[n+1][d];
         V = new float[m+1][d];
         biasV = new float[m+1];   //bias of item
@@ -141,7 +130,6 @@ public class MPR {
         System.out.println("Elapsed time (Read data): " + Float.toString((TIME_FINISH_READ_DATA - TIME_START_READ_DATA) / 1000F) + "s");
                 
 
-
         // Step 2: Initialize model parameters: U, V, bias
         long TIME_START_INITIALIZATION = System.currentTimeMillis();
         initialize();
@@ -149,14 +137,11 @@ public class MPR {
         System.out.println("Elapsed time (Initialize model parameters): " + Float.toString((TIME_FINISH_INITIALIZATION - TIME_START_INITIALIZATION) / 1000F) + "s");
 
 
-
         // Step 3: Training
         long TIME_START_TRAIN = System.currentTimeMillis();
         train();
         long TIME_FINISH_TRAIN = System.currentTimeMillis();
         System.out.println("Elapsed Time (Training):" + Float.toString((TIME_FINISH_TRAIN-TIME_START_TRAIN)/1000F) + "s");
-        
-
 
 
         // Step 4: Prediction and evaluation
@@ -166,9 +151,8 @@ public class MPR {
             long TIME_FINISH_TEST = System.currentTimeMillis();
             System.out.println("Elapsed Time (test):" + Float.toString((TIME_FINISH_TEST-TIME_START_TEST)/1000F) + "s");
         }
-        
-        System.out.println("Success!");
 
+        System.out.println("Success!");
     }
 
 
@@ -179,7 +163,7 @@ public class MPR {
         String line;
 
 
-        //read train data
+        // read train data
         if(fnTrainData.length() > 0) {
             br = new BufferedReader(new FileReader(fnTrainData));
             line = null;
@@ -223,6 +207,7 @@ public class MPR {
             br.close();
         }
 
+
         // read test data
         if(fnTestData.length() > 0) {
 
@@ -251,18 +236,6 @@ public class MPR {
 	    	}
 	    	br.close();
         }
-
-        // read relevant data
-        if (relevantData.length()>0)
-    	{
-	    	br = new BufferedReader(new FileReader(relevantData));
-	    	line = null;
-	    	while ((line = br.readLine())!=null)
-	    	{
-	    		relevant.add(Integer.parseInt(line));
-	    	}
-	    	br.close();
-    	}
     }
 
 
@@ -281,7 +254,6 @@ public class MPR {
         }
 
 
-
         // initialize \mu and biasV
         float g_avg = 0;
         for(int i = 1; i < m+1; i++) {
@@ -295,6 +267,7 @@ public class MPR {
             biasV[i] = (float) itemRatingNumTrain[i] / n - g_avg;
         }
     }
+
 
     public static void train() throws FileNotFoundException {
 
@@ -323,20 +296,18 @@ public class MPR {
 
                 int j = 0; // i.e.   $j$
 	    		do{
-	    			int r_j = (int) Math.floor(Math.random() * relevant.size());	  
-                    j = relevant.get(r_j);  			
-	    		}while( itemSet.contains(j) );
+	    			j = (int) Math.floor(Math.random() * m) + 1;	    			
+	    		}while( !ItemSetWhole.contains(j) || itemSet.contains(j) );
 
                 int z = 0; // i.e.   $q$
                 do{
 	    			z = (int) Math.floor(Math.random() * m) + 1;	    			
-	    		}while( !ItemSetWhole.contains(z) || itemSet.contains(z) || relevant.contains(z));
+	    		}while( !ItemSetWhole.contains(z) || itemSet.contains(z) );
 
                 int g = 0; // i.e.   $q^'$
                 do{
-                    int r_g = (int) Math.floor(Math.random() * relevant.size());
-                    g = relevant.get(r_g);
-	    		}while( itemSet.contains(g) );
+                    g = (int) Math.floor(Math.random() * m) + 1;	    			
+	    		}while( !ItemSetWhole.contains(g) || itemSet.contains(g) );
 
 
 
@@ -362,7 +333,7 @@ public class MPR {
                 
                 
 
-                // Step 3: updating
+                // Step 3: Updating
 
                 // calculate $loss_{succ_u}$
                 float loss_succ_u = - 1f / (1f + (float) Math.pow(Math.E, r_succ_u));
@@ -413,9 +384,11 @@ public class MPR {
         }
     }
     
-    public static void testRanking(HashMap<Integer, HashSet<Integer>> TestData){
+
+    public static void testRanking(HashMap<Integer, HashSet<Integer>> TestData) {
         
-        // criteria: prec、rec、F1、NDCG、oneCall、MRR、MAP、ARP、AUC
+        // TestData: user=>items
+        // criteria: prec、rec、F1、NDCG、oneCall、MRR、MAP、AUC
 
         float[] precisionSum = new float[topK+1];
         float[] recallSum = new float[topK+1];
@@ -454,7 +427,6 @@ public class MPR {
     		}
     		HashSet<Integer> ItemSet_u_TestData = TestData.get(u);
             int ItemNum_u_TestData = ItemSet_u_TestData.size();
-
 
 
             // prediction
@@ -499,7 +471,7 @@ public class MPR {
                 TopKResult[k] = itemID;
             }
 
-            // evaluate topK result: precision、recall、 F1、 NDCG、 1-Call
+            // TopK evaluation: precision、recall、 F1、 NDCG、 1-Call
             int HitSum = 0;
     		float[] DCG = new float[topK+1];
     		float[] DCGbest2 = new float[topK+1];
@@ -535,7 +507,7 @@ public class MPR {
     			OneCallSum[k] += HitSum>0 ? 1:0; 
             }
 
-            // evaluate topK result: RR, Reciprocal Rank
+            // RR, Reciprocal Rank
             if (flagMRR) {
 	    		int p = 1;
 	    		iter = listY.iterator();    		
@@ -553,7 +525,7 @@ public class MPR {
 	    		MRRSum += 1 / (float) p;
     		}
             
-            // evaluate topK result: AP, Average Precision
+            // AP, Average Precision
             if (flagMAP) {
 	    		int p = 1; // the current position
 	    		float AP = 0;
@@ -572,6 +544,7 @@ public class MPR {
 	    		MAPSum += AP / ItemNum_u_TestData;
     		}
 
+            // AUC
             if(flagAUC){
                 int AUC = 0;
                 for(int i : ItemSet_u_TestData) {
@@ -592,7 +565,6 @@ public class MPR {
         }
 
 
-
         // print the number of users in the test data
         System.out.println( "The number of users in the test data: " + Integer.toString(userNum_TestData));
         
@@ -607,21 +579,21 @@ public class MPR {
     	for(int k=1; k<=topK; k++)
     	{
     		float rec = recallSum[k]/userNum_TestData;
-    		System.out.println("Rec@"+Integer.toString(k)+":"+Float.toString(rec));
+    		System.out.println("Rec@"+Integer.toString(k)+":"+Float.toString(rec)); 		
     	}
 
     	// F1@K
     	for(int k=1; k<=topK; k++)
     	{
     		float F1 = F1Sum[k]/userNum_TestData;
-    		System.out.println("F1@"+Integer.toString(k)+":"+Float.toString(F1));
+    		System.out.println("F1@"+Integer.toString(k)+":"+Float.toString(F1));	
     	}
 
         // NDCG@K
     	for(int k=1; k<=topK; k++)
     	{
     		float NDCG = NDCGSum[k]/userNum_TestData;
-    		System.out.println("NDCG@"+Integer.toString(k)+":"+Float.toString(NDCG));  	
+    		System.out.println("NDCG@"+Integer.toString(k)+":"+Float.toString(NDCG));   		
     	}
 
     	// 1-call@K
